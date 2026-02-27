@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
 
 from src.config.timezone import now_utc, to_us, utc_and_us_iso
 from src.execution.risk import RateLimiter
@@ -138,7 +137,7 @@ def run_once(settings) -> int:
     append_run_row(
         settings.data_dir / "runs.csv",
         {
-            "run_id": datetime.utcnow().strftime("%Y%m%d%H%M%S"),
+            "run_id": now_utc().strftime("%Y%m%d%H%M%S"),
             "start_time_utc": utc_iso,
             "start_time_us": us_iso,
             "status": "SUCCESS",
