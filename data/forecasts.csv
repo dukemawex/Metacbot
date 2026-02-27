@@ -1,3 +1,5 @@
 run_time_utc,run_time_us,question_id,question_title,question_type,open_status,tournament_status,submission
 2026-02-27T14:33:24.330482+00:00,2026-02-27T09:33:24.330482-05:00,1,Will model X beat benchmark Y by Q4?,binary,OPEN,OPEN,"{'submitted': False, 'status': 'DRY_RUN', 'hash': '84d9fb4cd6a285e8ac1ebf34d39ff23243a8c43f86b116ba4f3324ab416b28a1'}"
 2026-02-27T14:33:24.330482+00:00,2026-02-27T09:33:24.330482-05:00,2,Top lab by year end,multiple_choice,CLOSED_WINDOW,OPEN,"{'submitted': False, 'status': 'SKIPPED_NOT_OPEN', 'hash': 'f28264e790d2ae486317648137b8708394b906cc7d3229b797ac5a4291c28555'}"
+2026-02-27T16:33:29.664967+00:00,2026-02-27T11:33:29.664967-05:00,1,Will model X beat benchmark Y by Q4?,binary,OPEN,OPEN,"{'submitted': False, 'status': 'DRY_RUN', 'hash': '84d9fb4cd6a285e8ac1ebf34d39ff23243a8c43f86b116ba4f3324ab416b28a1'}"
+2026-02-27T16:33:29.664967+00:00,2026-02-27T11:33:29.664967-05:00,2,Top lab by year end,multiple_choice,CLOSED_WINDOW,OPEN,"{'submitted': False, 'status': 'SKIPPED_NOT_OPEN', 'hash': 'f28264e790d2ae486317648137b8708394b906cc7d3229b797ac5a4291c28555'}"
