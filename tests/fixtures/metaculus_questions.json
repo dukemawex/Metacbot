@@ -1,0 +1,22 @@
+{
+  "results": [
+    {
+      "id": 1,
+      "title": "Will model X beat benchmark Y by Q4?",
+      "type": "binary",
+      "is_open": true,
+      "is_locked": false,
+      "resolved": false,
+      "close_time": "2027-01-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "title": "Top lab by year end",
+      "type": "multiple_choice",
+      "options": ["Lab A", "Lab B", "Lab C"],
+      "is_open": false,
+      "resolved": false,
+      "close_time": "2027-01-01T00:00:00Z"
+    }
+  ]
+}
