@@ -1,0 +1,6 @@
+{
+  "results": [
+    {"title": "AI benchmark report", "url": "https://example.com/report", "text": "Benchmarks improved.", "score": 0.92},
+    {"title": "Lab update", "url": "https://example.com/update", "text": "A major release shipped.", "score": 0.85}
+  ]
+}

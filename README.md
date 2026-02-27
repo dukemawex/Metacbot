@@ -1,1 +1,81 @@
-# Metacbot
+# Metacbot - Metaculus Tournament Sentinel
+
+A modular, automated sentinel for Metaculus tournament **32916** ("Current AI Tournament").
+
+## Secrets and safety
+
+The bot reads secrets **only** from environment variables (GitHub Secrets in Actions):
+
+- `METACULUS_TOKEN`
+- `EXA_API_KEY`
+- `OPENROUTER_API_KEY`
+
+Secrets are never hardcoded. Default mode is `DRY_RUN` (`LIVE_MODE=false`).
+
+## File tree
+
+```text
+.github/workflows/{ci.yml,scheduler.yml}
+src/
+  main.py
+  config/{settings.py,constants.py,timezone.py,logging.yaml}
+  metaculus/{client.py,schemas.py,selection.py,windows.py,state.py}
+  research/{exa_client.py,retrieval.py,source_ranker.py,evidence.py}
+  llm/{openrouter_client.py,roles.py,structured.py,prompts/*.md}
+  forecasting/{baselines.py,features.py,ensemble.py,validators.py,stats/*}
+  execution/{runner.py,submitter.py,risk.py,dedupe.py}
+  storage/{csv_logger.py,jsonl_logger.py,report.py,git_commit.py}
+data/
+tests/
+```
+
+## Architecture overview
+
+Every run (30-minute schedule):
+
+1. Load tournament/questions for ID `32916`
+2. Determine open-window status (tournament and each question)
+3. Select eligible questions
+4. Retrieve evidence (Exa)
+5. Run multi-role LLM pipeline (OpenRouter)
+6. Compute baseline + type-aware statistical forecast
+7. Ensemble + validation
+8. Submit only when `LIVE_MODE=true`, secrets exist, and market is open
+9. Log outputs to `data/runs.csv`, `data/forecasts.csv`, `data/forecasts.jsonl`, and `data/latest_summary.md`
+
+## Open-window behavior (America/New_York)
+
+Window checks use `America/New_York` logic with UTC+US timestamp logging. If a market is not open, the bot skips submission and logs `market closed/not open` with one of:
+
+- `CLOSED_WINDOW`
+- `LOCKED`
+- `RESOLVED`
+- `NOT_YET_OPEN`
+
+If `STRICT_OPEN_WINDOW=true`, a fully closed tournament causes non-zero exit; otherwise it exits successfully.
+
+## DRY_RUN quickstart (no secrets required)
+
+```bash
+python -m pip install -e .[dev]
+python -m src.main
+```
+
+When secrets are missing, fixtures under `tests/fixtures/` are used so the run works offline.
+
+## LIVE mode
+
+```bash
+export LIVE_MODE=true
+export METACULUS_TOKEN=...
+export EXA_API_KEY=...
+export OPENROUTER_API_KEY=...
+python -m src.main
+```
+
+⚠️ LIVE mode can submit real forecasts. Submissions include both forecast payload and reasoning with citations.
+
+## CI and Scheduler
+
+- `ci.yml`: `ruff` + `pytest`
+- `scheduler.yml`: runs every 30 minutes (`*/30 * * * *`), uploads artifacts, and commits `data/` updates.
