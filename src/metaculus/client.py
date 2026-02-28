@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import logging
 import time
 from typing import Any
 from urllib import request
@@ -9,8 +8,6 @@ from urllib import request
 from src.config.settings import Settings
 
 BASE_URL = "https://www.metaculus.com/api"
-logger = logging.getLogger(__name__)
-
 
 # Default percentile values for forecasts
 DEFAULT_P10 = 0.1
@@ -75,46 +72,32 @@ class MetaculusClient:
 
     def tournament_meta(self) -> dict:
         if not self.settings.metaculus_token:
-            return self._load_fixture("metaculus_tournament_32916.json")
-        try:
-            return self._request_json(f"{BASE_URL}/projects/{self.settings.tournament_id}/")
-        except Exception:
-            if self.settings.dry_run:
-                logger.warning("API request failed; falling back to fixture data (dry-run mode)")
-                return self._load_fixture("metaculus_tournament_32916.json")
-            raise
+            raise RuntimeError("METACULUS_TOKEN is required for Metaculus API requests")
+        return self._request_json(f"{BASE_URL}/projects/{self.settings.tournament_id}/")
 
     def questions(self) -> list[dict]:
         if not self.settings.metaculus_token:
-            data = self._load_fixture("metaculus_questions.json")
-            return data.get("results", data)
-        try:
-            url = (
-                f"{BASE_URL}/posts/"
-                f"?tournaments={self.settings.tournament_id}"
-                f"&has_group=false"
-                f"&order_by=-hotness"
-                f"&forecast_type=all"
-                f"&project={self.settings.tournament_id}"
-                f"&statuses=open,upcoming"
-                f"&include_description=true"
-                f"&limit=100"
-            )
-            data = self._request_json(url)
-            results = data.get("results", [])
-            questions = []
-            for post in results:
-                question = post.get("question")
-                if question:
-                    question["post_id"] = post.get("id")
-                    questions.append(question)
-            return questions
-        except Exception:
-            if self.settings.dry_run:
-                logger.warning("API request failed; falling back to fixture data (dry-run mode)")
-                data = self._load_fixture("metaculus_questions.json")
-                return data.get("results", data)
-            raise
+            raise RuntimeError("METACULUS_TOKEN is required for Metaculus API requests")
+        url = (
+            f"{BASE_URL}/posts/"
+            f"?tournaments={self.settings.tournament_id}"
+            f"&has_group=false"
+            f"&order_by=-hotness"
+            f"&forecast_type=all"
+            f"&project={self.settings.tournament_id}"
+            f"&statuses=open,upcoming"
+            f"&include_description=true"
+            f"&limit=100"
+        )
+        data = self._request_json(url)
+        results = data.get("results", [])
+        questions = []
+        for post in results:
+            question = post.get("question")
+            if question:
+                question["post_id"] = post.get("id")
+                questions.append(question)
+        return questions
 
     def submit(self, question: dict, forecast: dict, reasoning: str) -> dict:
         """Submit a forecast using the official Metaculus API endpoint."""

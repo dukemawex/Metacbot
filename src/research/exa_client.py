@@ -101,8 +101,7 @@ class ExaClient:
             List of search results with title, url, text, highlights, and score
         """
         if not self.settings.exa_api_key:
-            logger.debug("No Exa API key; returning fixture data")
-            return self._load_fixture()
+            raise RuntimeError("EXA_API_KEY is required for Exa API requests")
 
         body = self._build_request_body(query, num_results, search_type)
         req = request.Request(
@@ -125,9 +124,6 @@ class ExaClient:
                     time.sleep(2**attempt)
 
         # All retries failed
-        if self.settings.dry_run:
-            logger.warning("Exa API request failed; falling back to fixture data (dry-run mode)")
-            return self._load_fixture()
         raise RuntimeError(f"Exa API request failed after {self.settings.retries} attempts") from last_error
 
     def search_with_highlights(self, query: str, num_results: int = DEFAULT_NUM_RESULTS) -> list[dict]:

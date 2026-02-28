@@ -64,10 +64,12 @@ class Settings:
 
     def preflight(self) -> tuple[bool, list[str]]:
         errors: list[str] = []
-        if self.live_mode and not self.metaculus_token:
-            errors.append("LIVE_MODE=true requires METACULUS_TOKEN")
-        if self.live_mode and not self.exa_api_key:
-            errors.append("LIVE_MODE=true requires EXA_API_KEY")
-        if self.live_mode and not self.openrouter_api_key:
-            errors.append("LIVE_MODE=true requires OPENROUTER_API_KEY")
+        if not self.live_mode:
+            errors.append("LIVE_MODE must be true (dry-run mode is disabled)")
+        if not self.metaculus_token:
+            errors.append("METACULUS_TOKEN is required")
+        if not self.exa_api_key:
+            errors.append("EXA_API_KEY is required")
+        if not self.openrouter_api_key:
+            errors.append("OPENROUTER_API_KEY is required")
         return (len(errors) == 0, errors)
