@@ -11,8 +11,6 @@ from src.config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
-_OFFLINE_FALLBACK: dict = {"summary": "Offline mode fallback", "probability": 0.5, "confidence": 0.2}
-
 # Default model - OpenRouter free tier
 DEFAULT_MODEL = "openrouter/auto"
 
@@ -72,8 +70,7 @@ class OpenRouterClient:
     ) -> str:
         """Make a chat completion request and return raw text."""
         if not self.settings.openrouter_api_key:
-            logger.debug("No OpenRouter API key; returning offline fallback")
-            return _OFFLINE_FALLBACK.get("summary", "Offline mode fallback")
+            raise RuntimeError("OPENROUTER_API_KEY is required for OpenRouter API requests")
 
         body = self._build_request_body(prompt, system_prompt)
         req = request.Request(
@@ -96,16 +93,12 @@ class OpenRouterClient:
                     time.sleep(2**attempt)
 
         # All retries failed
-        if self.settings.dry_run:
-            logger.warning("OpenRouter API request failed; falling back to offline mode (dry-run)")
-            return _OFFLINE_FALLBACK.get("summary", "Offline mode fallback")
         raise RuntimeError(f"OpenRouter API request failed after {self.settings.retries} attempts") from last_error
 
     def chat_json(self, prompt: str, system_prompt: str | None = None) -> dict:
         """Make a chat completion request and return parsed JSON."""
         if not self.settings.openrouter_api_key:
-            logger.debug("No OpenRouter API key; returning offline fallback")
-            return dict(_OFFLINE_FALLBACK)
+            raise RuntimeError("OPENROUTER_API_KEY is required for OpenRouter API requests")
 
         body = self._build_request_body(
             prompt,
@@ -133,7 +126,4 @@ class OpenRouterClient:
                     time.sleep(2**attempt)
 
         # All retries failed
-        if self.settings.dry_run:
-            logger.warning("OpenRouter API request failed; falling back to offline mode (dry-run)")
-            return dict(_OFFLINE_FALLBACK)
         raise RuntimeError(f"OpenRouter API request failed after {self.settings.retries} attempts") from last_error

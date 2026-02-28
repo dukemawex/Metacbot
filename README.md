@@ -4,13 +4,15 @@ A modular, automated sentinel for Metaculus tournament **32916** ("Current AI To
 
 ## Secrets and safety
 
-The bot reads secrets **only** from environment variables (GitHub Secrets in Actions):
+The bot reads configuration **only** from environment variables (GitHub Secrets in Actions):
 
 - `METACULUS_TOKEN`
 - `EXA_API_KEY`
 - `OPENROUTER_API_KEY`
+- `LIVE_MODE` (set to `true` in secrets to enable scheduled runs; defaults to `false` if unset)
+- `STRICT_OPEN_WINDOW` (optional, set to `true` to enforce open windows; defaults to `false`)
 
-Secrets are never hardcoded. Default mode is `DRY_RUN` (`LIVE_MODE=false`).
+Secrets are never hardcoded. `LIVE_MODE=true` is required; dry-run mode is disabled. The scheduler workflow defaults `LIVE_MODE` to `false` if the secret is missing, so scheduled runs will fail preflight until you set the secret.
 
 ## File tree
 
@@ -40,7 +42,7 @@ Every run (30-minute schedule):
 5. Run multi-role LLM pipeline (OpenRouter)
 6. Compute baseline + type-aware statistical forecast
 7. Ensemble + validation
-8. Submit only when `LIVE_MODE=true`, secrets exist, and market is open
+8. Submit when secrets exist and the market is open (`LIVE_MODE=true` required)
 9. Log outputs to `data/runs.csv`, `data/forecasts.csv`, `data/forecasts.jsonl`, and `data/latest_summary.md`
 
 ## Open-window behavior (America/New_York)
@@ -54,16 +56,7 @@ Window checks use `America/New_York` logic with UTC+US timestamp logging. If a m
 
 If `STRICT_OPEN_WINDOW=true`, a fully closed tournament causes non-zero exit; otherwise it exits successfully.
 
-## DRY_RUN quickstart (no secrets required)
-
-```bash
-python -m pip install -e .[dev]
-python -m src.main
-```
-
-When secrets are missing, fixtures under `tests/fixtures/` are used so the run works offline.
-
-## LIVE mode
+## Live mode (required)
 
 ```bash
 export LIVE_MODE=true
@@ -73,7 +66,7 @@ export OPENROUTER_API_KEY=...
 python -m src.main
 ```
 
-⚠️ LIVE mode can submit real forecasts. Submissions include both forecast payload and reasoning with citations.
+⚠️ Live mode can submit real forecasts. Submissions include both forecast payload and reasoning with citations.
 
 ## CI and Scheduler
 

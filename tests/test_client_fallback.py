@@ -7,11 +7,11 @@ from src.config.settings import Settings
 from src.metaculus.client import MetaculusClient
 
 
-def _settings_with_token(live: bool = False) -> Settings:
+def _settings_with_token(live: bool = False, metaculus_token: str | None = "fake-token") -> Settings:
     base = Settings.from_env()
     # frozen dataclass – rebuild with overrides
     return Settings(
-        metaculus_token="fake-token",
+        metaculus_token=metaculus_token,
         exa_api_key=base.exa_api_key,
         openrouter_api_key=base.openrouter_api_key,
         live_mode=live,
@@ -28,29 +28,18 @@ def _settings_with_token(live: bool = False) -> Settings:
     )
 
 
-def test_tournament_meta_falls_back_on_http_error_in_dry_run():
-    settings = _settings_with_token(live=False)
+def test_tournament_meta_requires_token():
+    settings = _settings_with_token(metaculus_token=None)
     client = MetaculusClient(settings)
-
-    with patch.object(client, "_request_json", side_effect=HTTPError(
-        "http://example.com", 403, "Forbidden", {}, None
-    )):
-        result = client.tournament_meta()
-
-    assert isinstance(result, dict)
-    assert "id" in result or "name" in result or len(result) > 0
+    with pytest.raises(RuntimeError, match="METACULUS_TOKEN is required"):
+        client.tournament_meta()
 
 
-def test_questions_falls_back_on_http_error_in_dry_run():
-    settings = _settings_with_token(live=False)
+def test_questions_requires_token():
+    settings = _settings_with_token(metaculus_token=None)
     client = MetaculusClient(settings)
-
-    with patch.object(client, "_request_json", side_effect=HTTPError(
-        "http://example.com", 403, "Forbidden", {}, None
-    )):
-        result = client.questions()
-
-    assert isinstance(result, list)
+    with pytest.raises(RuntimeError, match="METACULUS_TOKEN is required"):
+        client.questions()
 
 
 def test_tournament_meta_raises_in_live_mode():

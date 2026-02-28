@@ -20,8 +20,6 @@ def maybe_submit(client, settings, state: dict, question: dict, final_forecast: 
 
     if not can_submit:
         return {"submitted": False, "status": "SKIPPED_NOT_OPEN", "hash": digest}
-    if settings.dry_run:
-        return {"submitted": False, "status": "DRY_RUN", "hash": digest}
     if not should_submit(last, digest, settings.cooldown_minutes):
         return {"submitted": False, "status": "SKIPPED_UNCHANGED", "hash": digest}
 

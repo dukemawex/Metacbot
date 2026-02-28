@@ -8,12 +8,16 @@ from src.llm.openrouter_client import OpenRouterClient
 from src.research.exa_client import ExaClient
 
 
-def _settings(live: bool = False) -> Settings:
+def _settings(
+    live: bool = False,
+    exa_api_key: str | None = "fake-exa-key",
+    openrouter_api_key: str | None = "fake-openrouter-key",
+) -> Settings:
     base = Settings.from_env()
     return Settings(
         metaculus_token="fake-token",
-        exa_api_key="fake-exa-key",
-        openrouter_api_key="fake-openrouter-key",
+        exa_api_key=exa_api_key,
+        openrouter_api_key=openrouter_api_key,
         live_mode=live,
         strict_open_window=base.strict_open_window,
         max_questions=base.max_questions,
@@ -28,16 +32,11 @@ def _settings(live: bool = False) -> Settings:
     )
 
 
-def test_exa_search_falls_back_on_http_error_in_dry_run():
-    settings = _settings(live=False)
+def test_exa_search_requires_api_key():
+    settings = _settings(exa_api_key=None)
     client = ExaClient(settings)
-
-    with patch("src.research.exa_client.request.urlopen", side_effect=HTTPError(
-        "http://example.com", 403, "Forbidden", {}, None
-    )):
-        result = client.search("test query")
-
-    assert isinstance(result, list)
+    with pytest.raises(RuntimeError, match="EXA_API_KEY is required"):
+        client.search("test query")
 
 
 def test_exa_search_raises_in_live_mode():
@@ -51,17 +50,11 @@ def test_exa_search_raises_in_live_mode():
             client.search("test query")
 
 
-def test_openrouter_chat_json_falls_back_on_http_error_in_dry_run():
-    settings = _settings(live=False)
+def test_openrouter_chat_json_requires_api_key():
+    settings = _settings(openrouter_api_key=None)
     client = OpenRouterClient(settings)
-
-    with patch("src.llm.openrouter_client.request.urlopen", side_effect=HTTPError(
-        "http://example.com", 403, "Forbidden", {}, None
-    )):
-        result = client.chat_json("test prompt")
-
-    assert isinstance(result, dict)
-    assert "probability" in result
+    with pytest.raises(RuntimeError, match="OPENROUTER_API_KEY is required"):
+        client.chat_json("test prompt")
 
 
 def test_openrouter_chat_json_raises_in_live_mode():
@@ -75,16 +68,11 @@ def test_openrouter_chat_json_raises_in_live_mode():
             client.chat_json("test prompt")
 
 
-def test_openrouter_chat_falls_back_on_http_error_in_dry_run():
-    settings = _settings(live=False)
+def test_openrouter_chat_requires_api_key():
+    settings = _settings(openrouter_api_key=None)
     client = OpenRouterClient(settings)
-
-    with patch("src.llm.openrouter_client.request.urlopen", side_effect=HTTPError(
-        "http://example.com", 403, "Forbidden", {}, None
-    )):
-        result = client.chat("test prompt")
-
-    assert isinstance(result, str)
+    with pytest.raises(RuntimeError, match="OPENROUTER_API_KEY is required"):
+        client.chat("test prompt")
 
 
 def test_openrouter_chat_raises_in_live_mode():
