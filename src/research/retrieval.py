@@ -26,11 +26,13 @@ def retrieve_evidence(question: dict, exa_client) -> EvidenceBundle:
                 exc,
             )
     ranked = deduplicate_and_rank(rows)
-    question_id = question.get("id")
-    try:
-        question_id = int(question_id) if question_id is not None else 0
-    except (TypeError, ValueError):
-        question_id = 0
+    question_id = 0
+    raw_id = question.get("id")
+    if raw_id is not None:
+        try:
+            question_id = int(raw_id)
+        except (TypeError, ValueError):
+            question_id = 0
     items = [
         EvidenceItem(
             idx=i + 1,

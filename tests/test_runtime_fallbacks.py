@@ -4,17 +4,17 @@ from src.research.retrieval import retrieve_evidence
 
 
 class StubFailingExa:
-    def search(self, query: str) -> list[dict]:
+    def search(self, _query: str) -> list[dict]:
         raise RuntimeError("boom")
 
 
 class StubFailingLLM:
-    def chat_json(self, prompt: str) -> dict:
+    def chat_json(self, _prompt: str) -> dict:
         raise ValueError("bad")
 
 
 class StubEmptyExa:
-    def search(self, query: str) -> list[dict]:
+    def search(self, _query: str) -> list[dict]:
         return []
 
 
