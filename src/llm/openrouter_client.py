@@ -1,15 +1,10 @@
 from __future__ import annotations
 
 import json
-import logging
 import time
 from urllib import request
 
 from src.config.settings import Settings
-
-logger = logging.getLogger(__name__)
-
-_OFFLINE_FALLBACK: dict = {"summary": "Offline mode fallback", "probability": 0.5, "confidence": 0.2}
 
 
 class OpenRouterClient:
@@ -19,7 +14,7 @@ class OpenRouterClient:
 
     def chat_json(self, prompt: str) -> dict:
         if not self.settings.openrouter_api_key:
-            return dict(_OFFLINE_FALLBACK)
+            return {"summary": "Offline mode fallback", "probability": 0.5, "confidence": 0.2}
 
         body = json.dumps(
             {
@@ -45,11 +40,6 @@ class OpenRouterClient:
                     return json.loads(content)
             except Exception:
                 if i == self.settings.retries - 1:
-                    if self.settings.dry_run:
-                        logger.warning(
-                            "OpenRouter API request failed; falling back to offline mode (dry-run)"
-                        )
-                        return dict(_OFFLINE_FALLBACK)
                     raise
                 time.sleep(2**i)
         return {}
