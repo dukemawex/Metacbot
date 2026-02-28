@@ -24,4 +24,4 @@ def retrieve_evidence(question: dict, exa_client) -> EvidenceBundle:
         )
         for i, row in enumerate(ranked)
     ]
-    return EvidenceBundle(question_id=int(question["id"]), items=items)
+    return EvidenceBundle(question_id=int(question.get("id", 0)), items=items)
