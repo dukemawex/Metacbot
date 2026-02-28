@@ -7,8 +7,12 @@ from src.execution.dedupe import should_submit, submission_hash
 
 
 def maybe_submit(client, settings, state: dict, question: dict, final_forecast: dict, reasoning: str, can_submit: bool):
-    qid = str(question["id"])
-    digest = submission_hash(question["id"], final_forecast, reasoning, MODEL_VERSION)
+    question_id = question.get("id")
+    if question_id is None:
+        raise ValueError("Question must have an 'id' field")
+
+    qid = str(question_id)
+    digest = submission_hash(question_id, final_forecast, reasoning, MODEL_VERSION)
     last = state.get("submissions", {}).get(qid)
 
     if not can_submit:
@@ -21,7 +25,7 @@ def maybe_submit(client, settings, state: dict, question: dict, final_forecast: 
     response = client.submit(question, final_forecast, reasoning)
     post_id = question.get("post_id")
     if post_id is None:
-        post_id = question["id"]
+        post_id = question_id
     client.post_comment(post_id, reasoning)
     state.setdefault("submissions", {})[qid] = {
         "hash": digest,

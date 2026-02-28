@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 _OFFLINE_FALLBACK: dict = {"summary": "Offline mode fallback", "probability": 0.5, "confidence": 0.2}
 
-# Default model - can be overridden via settings
-DEFAULT_MODEL = "openai/gpt-4o-mini"
+# Default model - OpenRouter free tier
+DEFAULT_MODEL = "openrouter/auto"
 
 
 class OpenRouterClient:

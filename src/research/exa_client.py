@@ -134,8 +134,8 @@ class ExaClient:
         """
         Search and return results with highlighted relevant passages.
 
-        This is similar to the forecasting-tools ExaSearcher.invoke_for_highlights_in_relevance_order
+        This is similar to the forecasting-tools ExaSearcher.invoke_for_highlights_in_relevance_order.
+        Results are explicitly sorted by score to ensure consistent ordering regardless of API behavior.
         """
         results = self.search(query, num_results)
-        # Sort by score descending
         return sorted(results, key=lambda x: x.get("score", 0), reverse=True)
