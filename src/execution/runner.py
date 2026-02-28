@@ -110,7 +110,7 @@ def run_once(settings) -> int:
             can_submit=can_submit,
         )
         if not can_submit and submission["status"] == "SKIPPED_NOT_OPEN":
-            logger.info("market closed/not open question_id=%s status=%s", question["id"], q_status)
+            logger.info("market closed/not open question_id=%s status=%s", question.get("id"), q_status)
 
         record = {
             "run_time_utc": utc_iso,
