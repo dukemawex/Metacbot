@@ -9,7 +9,7 @@ from src.research.exa_client import ExaClient
 
 
 def _settings(
-    live: bool = True,
+    live: bool = False,
     exa_api_key: str | None = "fake-exa-key",
     openrouter_api_key: str | None = "fake-openrouter-key",
 ) -> Settings:

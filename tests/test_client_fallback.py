@@ -7,7 +7,7 @@ from src.config.settings import Settings
 from src.metaculus.client import MetaculusClient
 
 
-def _settings_with_token(live: bool = True, metaculus_token: str | None = "fake-token") -> Settings:
+def _settings_with_token(live: bool = False, metaculus_token: str | None = "fake-token") -> Settings:
     base = Settings.from_env()
     # frozen dataclass – rebuild with overrides
     return Settings(
