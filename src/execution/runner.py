@@ -147,6 +147,4 @@ def run_once(settings) -> int:
     )
     write_summary(settings.data_dir / "latest_summary.md", records, utc_iso, us_iso)
 
-    if settings.strict_open_window and not tournament_open:
-        return 2
     return 0

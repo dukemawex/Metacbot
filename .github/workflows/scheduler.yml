@@ -15,9 +15,6 @@ jobs:
       METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
       EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      LIVE_MODE: ${{ secrets.LIVE_MODE || 'false' }}
-      STRICT_OPEN_WINDOW: ${{ secrets.STRICT_OPEN_WINDOW || 'false' }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -42,7 +39,3 @@ jobs:
           git config user.email github-actions@github.com
           git add data/
           git diff --cached --quiet || (git commit -m "Update sentinel data" && git push)
-      - name: Optional Slack alert
-        if: failure() && env.SLACK_WEBHOOK_URL != ''
-        run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text":"Metacbot scheduler failed"}' "$SLACK_WEBHOOK_URL"

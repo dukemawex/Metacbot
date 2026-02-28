@@ -9,7 +9,6 @@ from src.research.exa_client import ExaClient
 
 
 def _settings(
-    live: bool = False,
     exa_api_key: str | None = "fake-exa-key",
     openrouter_api_key: str | None = "fake-openrouter-key",
 ) -> Settings:
@@ -18,8 +17,6 @@ def _settings(
         metaculus_token="fake-token",
         exa_api_key=exa_api_key,
         openrouter_api_key=openrouter_api_key,
-        live_mode=live,
-        strict_open_window=base.strict_open_window,
         max_questions=base.max_questions,
         timeout_seconds=base.timeout_seconds,
         retries=1,
@@ -39,8 +36,8 @@ def test_exa_search_requires_api_key():
         client.search("test query")
 
 
-def test_exa_search_raises_in_live_mode():
-    settings = _settings(live=True)
+def test_exa_search_raises_on_http_error():
+    settings = _settings()
     client = ExaClient(settings)
 
     with patch("src.research.exa_client.request.urlopen", side_effect=HTTPError(
@@ -57,8 +54,8 @@ def test_openrouter_chat_json_requires_api_key():
         client.chat_json("test prompt")
 
 
-def test_openrouter_chat_json_raises_in_live_mode():
-    settings = _settings(live=True)
+def test_openrouter_chat_json_raises_on_http_error():
+    settings = _settings()
     client = OpenRouterClient(settings)
 
     with patch("src.llm.openrouter_client.request.urlopen", side_effect=HTTPError(
@@ -75,8 +72,8 @@ def test_openrouter_chat_requires_api_key():
         client.chat("test prompt")
 
 
-def test_openrouter_chat_raises_in_live_mode():
-    settings = _settings(live=True)
+def test_openrouter_chat_raises_on_http_error():
+    settings = _settings()
     client = OpenRouterClient(settings)
 
     with patch("src.llm.openrouter_client.request.urlopen", side_effect=HTTPError(

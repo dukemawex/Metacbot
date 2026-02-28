@@ -9,10 +9,8 @@ The bot reads configuration **only** from environment variables (GitHub Secrets 
 - `METACULUS_TOKEN`
 - `EXA_API_KEY`
 - `OPENROUTER_API_KEY`
-- `LIVE_MODE` (set to `true` in secrets to enable scheduled runs; defaults to `false` if unset)
-- `STRICT_OPEN_WINDOW` (optional, set to `true` to enforce open windows; defaults to `false`)
 
-Secrets are never hardcoded. `LIVE_MODE=true` is required; dry-run mode is disabled. The scheduler workflow defaults `LIVE_MODE` to `false` if the secret is missing, so scheduled runs will fail preflight until you set the secret.
+Secrets are never hardcoded.
 
 ## File tree
 
@@ -42,7 +40,7 @@ Every run (30-minute schedule):
 5. Run multi-role LLM pipeline (OpenRouter)
 6. Compute baseline + type-aware statistical forecast
 7. Ensemble + validation
-8. Submit when secrets exist and the market is open (`LIVE_MODE=true` required)
+8. Submit when secrets exist and the market is open
 9. Log outputs to `data/runs.csv`, `data/forecasts.csv`, `data/forecasts.jsonl`, and `data/latest_summary.md`
 
 ## Open-window behavior (America/New_York)
@@ -54,19 +52,18 @@ Window checks use `America/New_York` logic with UTC+US timestamp logging. If a m
 - `RESOLVED`
 - `NOT_YET_OPEN`
 
-If `STRICT_OPEN_WINDOW=true`, a fully closed tournament causes non-zero exit; otherwise it exits successfully.
+If `STRICT_OPEN_WINDOW` behavior is needed, it can be added as a code change.
 
-## Live mode (required)
+## Live mode
 
 ```bash
-export LIVE_MODE=true
 export METACULUS_TOKEN=...
 export EXA_API_KEY=...
 export OPENROUTER_API_KEY=...
 python -m src.main
 ```
 
-⚠️ Live mode can submit real forecasts. Submissions include both forecast payload and reasoning with citations.
+⚠️ The bot always runs in live mode and can submit real forecasts.
 
 ## CI and Scheduler
 

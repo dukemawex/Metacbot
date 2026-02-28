@@ -7,19 +7,11 @@ from pathlib import Path
 from src.config import constants
 
 
-def _as_bool(value: str | None, default: bool = False) -> bool:
-    if value is None:
-        return default
-    return value.strip().lower() in {"1", "true", "yes", "on"}
-
-
 @dataclass(frozen=True)
 class Settings:
     metaculus_token: str | None
     exa_api_key: str | None
     openrouter_api_key: str | None
-    live_mode: bool
-    strict_open_window: bool
     max_questions: int
     timeout_seconds: int
     retries: int
@@ -29,10 +21,6 @@ class Settings:
     tournament_id: int | str
     data_dir: Path
     fixtures_dir: Path
-
-    @property
-    def dry_run(self) -> bool:
-        return not self.live_mode
 
     @staticmethod
     def _parse_tournament_id(value: str) -> int | str:
@@ -49,8 +37,6 @@ class Settings:
             metaculus_token=os.getenv("METACULUS_TOKEN"),
             exa_api_key=os.getenv("EXA_API_KEY"),
             openrouter_api_key=os.getenv("OPENROUTER_API_KEY"),
-            live_mode=_as_bool(os.getenv("LIVE_MODE"), default=False),
-            strict_open_window=_as_bool(os.getenv("STRICT_OPEN_WINDOW"), default=False),
             max_questions=int(os.getenv("MAX_QUESTIONS", constants.DEFAULT_MAX_QUESTIONS)),
             timeout_seconds=int(os.getenv("TIMEOUT_SECONDS", constants.DEFAULT_TIMEOUT_SECONDS)),
             retries=int(os.getenv("RETRIES", constants.DEFAULT_RETRIES)),
@@ -64,8 +50,6 @@ class Settings:
 
     def preflight(self) -> tuple[bool, list[str]]:
         errors: list[str] = []
-        if not self.live_mode:
-            errors.append("LIVE_MODE must be true (dry-run mode is disabled)")
         if not self.metaculus_token:
             errors.append("METACULUS_TOKEN is required")
         if not self.exa_api_key:
