@@ -9,10 +9,10 @@ The bot reads configuration **only** from environment variables (GitHub Secrets 
 - `METACULUS_TOKEN`
 - `EXA_API_KEY`
 - `OPENROUTER_API_KEY`
-- `LIVE_MODE` (set to `true`)
-- `STRICT_OPEN_WINDOW` (optional, set to `true` to enforce open windows)
+- `LIVE_MODE` (set to `true` in secrets to enable scheduled runs; defaults to `false` if unset)
+- `STRICT_OPEN_WINDOW` (optional, set to `true` to enforce open windows; defaults to `false`)
 
-Secrets are never hardcoded. `LIVE_MODE=true` is required; dry-run mode is disabled.
+Secrets are never hardcoded. `LIVE_MODE=true` is required; dry-run mode is disabled. The scheduler workflow defaults `LIVE_MODE` to `false` if the secret is missing, so scheduled runs will fail preflight until you set the secret.
 
 ## File tree
 
