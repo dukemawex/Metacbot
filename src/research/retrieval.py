@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import logging
+
 from src.research.evidence import EvidenceBundle, EvidenceItem
 from src.research.source_ranker import deduplicate_and_rank
+
+logger = logging.getLogger(__name__)
 
 
 def build_queries(question: dict) -> list[str]:
@@ -12,8 +16,20 @@ def build_queries(question: dict) -> list[str]:
 def retrieve_evidence(question: dict, exa_client) -> EvidenceBundle:
     rows: list[dict] = []
     for query in build_queries(question):
-        rows.extend(exa_client.search(query))
+        try:
+            rows.extend(exa_client.search(query))
+        except Exception as exc:
+            logger.warning(
+                "Failed to search evidence for question_id=%s with query=\"%s\": %s",
+                question.get("id"),
+                query,
+                exc,
+            )
     ranked = deduplicate_and_rank(rows)
+    try:
+        question_id = int(question.get("id", 0))
+    except (TypeError, ValueError):
+        question_id = 0
     items = [
         EvidenceItem(
             idx=i + 1,
@@ -24,4 +40,4 @@ def retrieve_evidence(question: dict, exa_client) -> EvidenceBundle:
         )
         for i, row in enumerate(ranked)
     ]
-    return EvidenceBundle(question_id=int(question.get("id", 0)), items=items)
+    return EvidenceBundle(question_id=question_id, items=items)

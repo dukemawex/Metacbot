@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError
 
 import pytest
@@ -60,3 +60,31 @@ def test_questions_raises_on_http_error():
     )):
         with pytest.raises(HTTPError):
             client.questions()
+
+
+def _mock_urlopen():
+    response = MagicMock()
+    response.read.return_value = b"{}"
+    urlopen_mock = MagicMock()
+    urlopen_mock.return_value.__enter__.return_value = response
+    return urlopen_mock
+
+
+def test_request_includes_authorization_token_header():
+    settings = _settings_with_token("abc123")
+    client = MetaculusClient(settings)
+    with patch("src.metaculus.client.request.Request") as request_mock:
+        with patch("src.metaculus.client.request.urlopen", _mock_urlopen()):
+            client._request_json("http://example.com")
+    headers = request_mock.call_args.kwargs["headers"]
+    assert headers["Authorization"] == "Token abc123"
+
+
+def test_request_preserves_prefixed_authorization_token():
+    settings = _settings_with_token("Token abc123")
+    client = MetaculusClient(settings)
+    with patch("src.metaculus.client.request.Request") as request_mock:
+        with patch("src.metaculus.client.request.urlopen", _mock_urlopen()):
+            client._request_json("http://example.com")
+    headers = request_mock.call_args.kwargs["headers"]
+    assert headers["Authorization"] == "Token abc123"
