@@ -24,7 +24,7 @@ class Settings:
 
     @staticmethod
     def _parse_tournament_id(value: str) -> int | str:
-        """Parse tournament ID - try as int first, fall back to string."""
+        """Parse TOURNAMENT_ID as numeric project/tournament ID when possible, else keep slug string."""
         try:
             return int(value)
         except ValueError:

@@ -95,3 +95,61 @@ def test_403_raises_actionable_error_with_token_and_visibility_hints():
     assert "METACULUS_API_KEY" in message
     assert "TOURNAMENT_ID" in message
     assert "Auth required" in message
+
+
+def test_tournament_meta_tries_project_then_tournament_for_numeric_id():
+    settings = _settings_with_token()
+    settings = Settings(**{**settings.__dict__, "tournament_id": 32916})
+    client = MetaculusClient(settings)
+
+    def fake_request(url: str, **_kwargs):
+        if url.endswith("/api2/projects/32916/"):
+            raise MetaculusAPIError("404", http_status=404, url=url)
+        if url.endswith("/api/projects/32916/"):
+            raise MetaculusAPIError("404", http_status=404, url=url)
+        if url.endswith("/api2/tournaments/32916/"):
+            return {"id": 32916, "source": "api2-tournaments"}
+        raise AssertionError(f"Unexpected URL: {url}")
+
+    with patch.object(client, "_request_json", side_effect=fake_request) as request_mock:
+        result = client.tournament_meta()
+
+    assert result["source"] == "api2-tournaments"
+    attempted = [call.args[0] for call in request_mock.call_args_list]
+    assert attempted[:3] == [
+        "https://www.metaculus.com/api2/projects/32916/",
+        "https://www.metaculus.com/api/projects/32916/",
+        "https://www.metaculus.com/api2/tournaments/32916/",
+    ]
+
+
+def test_tournament_meta_uses_slug_without_posts_fallback():
+    settings = _settings_with_token()
+    settings = Settings(**{**settings.__dict__, "tournament_id": "spring-aib-2026"})
+    client = MetaculusClient(settings)
+
+    with patch.object(client, "_request_json", return_value={"slug": "spring-aib-2026"}) as request_mock:
+        result = client.tournament_meta()
+
+    assert result["slug"] == "spring-aib-2026"
+    attempted = [call.args[0] for call in request_mock.call_args_list]
+    assert all("/posts/" not in url for url in attempted)
+    assert attempted[0] == "https://www.metaculus.com/api2/projects/spring-aib-2026/"
+
+
+def test_tournament_meta_raises_clear_error_when_all_404():
+    settings = _settings_with_token()
+    settings = Settings(**{**settings.__dict__, "tournament_id": 32916})
+    client = MetaculusClient(settings)
+
+    def always_404(url: str, **_kwargs):
+        raise MetaculusAPIError("404", http_status=404, url=url)
+
+    with patch.object(client, "_request_json", side_effect=always_404):
+        with pytest.raises(MetaculusAPIError) as exc:
+            client.tournament_meta()
+
+    message = str(exc.value)
+    assert "Resource not found: the id may be wrong or endpoint mismatched (project vs tournament)" in message
+    assert "tournament_id=32916" in message
+    assert "tried_endpoints=" in message

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from typing import Any
 from urllib import request
@@ -9,7 +10,9 @@ from urllib.error import HTTPError, URLError
 from src.config.settings import Settings
 
 BASE_URL = "https://www.metaculus.com/api"
+BASE_URL_V2 = "https://www.metaculus.com/api2"
 ERROR_BODY_LIMIT = 2048
+logger = logging.getLogger(__name__)
 
 # Default percentile values for forecasts
 DEFAULT_P10 = 0.1
@@ -20,6 +23,10 @@ DEFAULT_P90 = 0.9
 class MetaculusAPIError(RuntimeError):
     """Raised when the Metaculus API returns an actionable error."""
 
+    def __init__(self, message: str, http_status: int | None = None, url: str | None = None):
+        super().__init__(message)
+        self.http_status = http_status
+        self.url = url
 
 
 def _format_payload_for_api(question: dict, forecast: dict) -> dict:
@@ -102,12 +109,16 @@ class MetaculusClient:
             body_hint = f" Response body: {response_text}" if response_text else ""
             raise MetaculusAPIError(
                 f"Metaculus API request failed with HTTP {err.code} for {url}. "
-                f"{token_hint} {visibility_hint}{body_hint}"
+                f"{token_hint} {visibility_hint}{body_hint}",
+                http_status=err.code,
+                url=url,
             ) from err
 
         body_hint = f" Response body: {response_text}" if response_text else ""
         raise MetaculusAPIError(
-            f"Metaculus API request failed with HTTP {err.code} for {url}.{body_hint}"
+            f"Metaculus API request failed with HTTP {err.code} for {url}.{body_hint}",
+            http_status=err.code,
+            url=url,
         ) from err
 
     def _request_json(self, url: str, method: str = "GET", body: dict[str, Any] | list[dict[str, Any]] | None = None) -> dict:
@@ -131,8 +142,54 @@ class MetaculusClient:
         path = self.settings.fixtures_dir / filename
         return json.loads(path.read_text(encoding="utf-8"))
 
+    def _tournament_meta_urls(self) -> list[str]:
+        tournament_id = self.settings.tournament_id
+        tournament_id_str = str(tournament_id)
+        urls = [
+            f"{BASE_URL_V2}/projects/{tournament_id_str}/",
+            f"{BASE_URL}/projects/{tournament_id_str}/",
+            f"{BASE_URL_V2}/tournaments/{tournament_id_str}/",
+            f"{BASE_URL}/tournaments/{tournament_id_str}/",
+        ]
+        if isinstance(tournament_id, int):
+            urls.extend(
+                [
+                    f"{BASE_URL_V2}/posts/{tournament_id}/",
+                    f"{BASE_URL}/posts/{tournament_id}/",
+                ]
+            )
+        return urls
+
     def tournament_meta(self) -> dict:
-        return self._request_json(f"{BASE_URL}/projects/{self.settings.tournament_id}/")
+        urls = self._tournament_meta_urls()
+        tried_urls: list[str] = []
+        for url in urls:
+            try:
+                data = self._request_json(url)
+                if tried_urls:
+                    logger.info(
+                        "Tournament metadata fetch succeeded after fallback. tournament_id=%s successful_endpoint=%s tried_endpoints=%s",
+                        self.settings.tournament_id,
+                        url,
+                        [*tried_urls, url],
+                    )
+                return data
+            except MetaculusAPIError as err:
+                tried_urls.append(url)
+                if err.http_status == 404:
+                    logger.warning(
+                        "Resource not found: the id may be wrong or endpoint mismatched (project vs tournament). tournament_id=%s endpoint=%s tried_endpoints=%s",
+                        self.settings.tournament_id,
+                        url,
+                        tried_urls,
+                    )
+                    continue
+                raise
+        raise MetaculusAPIError(
+            "Metaculus tournament metadata lookup failed: Resource not found: the id may be wrong "
+            "or endpoint mismatched (project vs tournament). "
+            f"tournament_id={self.settings.tournament_id} tried_endpoints={tried_urls}"
+        )
 
     def questions(self) -> list[dict]:
         url = (
