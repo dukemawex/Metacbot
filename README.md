@@ -1,6 +1,6 @@
 # Metacbot - Metaculus Tournament Sentinel
 
-A modular, automated sentinel for Metaculus tournament **32916** ("Current AI Tournament").
+A modular, automated sentinel for a Metaculus tournament/project (default **32916**, "Current AI Tournament").
 
 ## Secrets and safety
 
@@ -10,6 +10,10 @@ The bot reads configuration **only** from environment variables (GitHub Secrets 
 - `METACULUS_API_KEY` (fallback alias)
 - `EXA_API_KEY`
 - `OPENROUTER_API_KEY`
+
+- `TOURNAMENT_ID` (project/tournament identifier; accepts numeric ID like `32916` or slug like `spring-aib-2026`)
+
+`TOURNAMENT_ID` should be the Metaculus project/tournament identifier from the tournament page URL (slug) or from API payload IDs (numeric).
 
 Secrets are never hardcoded.
 
@@ -34,7 +38,7 @@ tests/
 
 Every run (30-minute schedule):
 
-1. Load tournament/questions for ID `32916`
+1. Load tournament/questions for `TOURNAMENT_ID` (default `32916`)
 2. Determine open-window status (tournament and each question)
 3. Select eligible questions
 4. Retrieve evidence (Exa)
