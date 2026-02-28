@@ -1,12 +1,10 @@
 from unittest.mock import patch
 from urllib.error import HTTPError
 
+import pytest
+
 from src.config.settings import Settings
 from src.metaculus.client import MetaculusClient
-
-
-def _make_settings(token: str | None, live: bool) -> Settings:
-    return Settings.from_env()._replace(metaculus_token=token, live_mode=live)
 
 
 def _settings_with_token(live: bool = False) -> Settings:
@@ -62,11 +60,8 @@ def test_tournament_meta_raises_in_live_mode():
     with patch.object(client, "_request_json", side_effect=HTTPError(
         "http://example.com", 403, "Forbidden", {}, None
     )):
-        try:
+        with pytest.raises(HTTPError):
             client.tournament_meta()
-            assert False, "Expected HTTPError"
-        except HTTPError:
-            pass
 
 
 def test_questions_raises_in_live_mode():
@@ -76,8 +71,5 @@ def test_questions_raises_in_live_mode():
     with patch.object(client, "_request_json", side_effect=HTTPError(
         "http://example.com", 403, "Forbidden", {}, None
     )):
-        try:
+        with pytest.raises(HTTPError):
             client.questions()
-            assert False, "Expected HTTPError"
-        except HTTPError:
-            pass
