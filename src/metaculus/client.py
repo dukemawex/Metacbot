@@ -4,15 +4,22 @@ import json
 import time
 from typing import Any
 from urllib import request
+from urllib.error import HTTPError, URLError
 
 from src.config.settings import Settings
 
 BASE_URL = "https://www.metaculus.com/api"
+ERROR_BODY_LIMIT = 2048
 
 # Default percentile values for forecasts
 DEFAULT_P10 = 0.1
 DEFAULT_P50 = 0.5
 DEFAULT_P90 = 0.9
+
+
+class MetaculusAPIError(RuntimeError):
+    """Raised when the Metaculus API returns an actionable error."""
+
 
 
 def _format_payload_for_api(question: dict, forecast: dict) -> dict:
@@ -48,39 +55,86 @@ class MetaculusClient:
         self.settings = settings
 
     def _headers(self) -> dict[str, str]:
-        headers = {"Content-Type": "application/json"}
+        headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "metacbot/1.0 (+https://github.com/metacbot)",
+        }
         if self.settings.metaculus_token:
             token = self.settings.metaculus_token.strip()
-            if not token.startswith("Token "):
+            if not token.startswith(("Token ", "Bearer ")):
                 token = f"Token {token}"
             headers["Authorization"] = token
         return headers
 
-    def _request_json(self, url: str, method: str = "GET", body: dict[str, Any] | None = None) -> dict:
+    @staticmethod
+    def _truncate_error_body(body: bytes | str | None) -> str:
+        if body is None:
+            return ""
+        if isinstance(body, bytes):
+            text = body.decode("utf-8", errors="replace")
+        else:
+            text = body
+        text = text.strip()
+        if not text:
+            return ""
+        if len(text) > ERROR_BODY_LIMIT:
+            return f"{text[:ERROR_BODY_LIMIT]}..."
+        return text
+
+    def _raise_actionable_http_error(self, err: HTTPError, url: str) -> None:
+        response_text = ""
+        if err.fp is not None:
+            try:
+                response_text = self._truncate_error_body(err.read())
+            except Exception:
+                response_text = ""
+
+        if err.code in {401, 403}:
+            token_hint = (
+                "Authentication token is missing. Set METACULUS_TOKEN (or METACULUS_API_KEY)."
+                if not self.settings.metaculus_token
+                else "Provided token may be invalid or missing required scope."
+            )
+            visibility_hint = (
+                f"Verify TOURNAMENT_ID={self.settings.tournament_id} is correct and visible to this account."
+            )
+            body_hint = f" Response body: {response_text}" if response_text else ""
+            raise MetaculusAPIError(
+                f"Metaculus API request failed with HTTP {err.code} for {url}. "
+                f"{token_hint} {visibility_hint}{body_hint}"
+            ) from err
+
+        body_hint = f" Response body: {response_text}" if response_text else ""
+        raise MetaculusAPIError(
+            f"Metaculus API request failed with HTTP {err.code} for {url}.{body_hint}"
+        ) from err
+
+    def _request_json(self, url: str, method: str = "GET", body: dict[str, Any] | list[dict[str, Any]] | None = None) -> dict:
         payload = None if body is None else json.dumps(body).encode("utf-8")
         req = request.Request(url=url, method=method, headers=self._headers(), data=payload)
         for attempt in range(self.settings.retries):
             try:
                 with request.urlopen(req, timeout=self.settings.timeout_seconds) as resp:
                     return json.loads(resp.read().decode("utf-8"))
-            except Exception:
-                if attempt == self.settings.retries - 1:
-                    raise
+            except HTTPError as err:
+                if err.code in {401, 403, 429} or attempt == self.settings.retries - 1:
+                    self._raise_actionable_http_error(err, url)
                 time.sleep(2**attempt)
-        return {}
+            except URLError as err:
+                if attempt == self.settings.retries - 1:
+                    raise MetaculusAPIError(f"Metaculus API request failed for {url}: {err}") from err
+                time.sleep(2**attempt)
+        raise MetaculusAPIError(f"Metaculus API request exhausted retries for {url}")
 
     def _load_fixture(self, filename: str) -> dict:
         path = self.settings.fixtures_dir / filename
         return json.loads(path.read_text(encoding="utf-8"))
 
     def tournament_meta(self) -> dict:
-        if not self.settings.metaculus_token:
-            raise RuntimeError("METACULUS_TOKEN is required for Metaculus API requests")
         return self._request_json(f"{BASE_URL}/projects/{self.settings.tournament_id}/")
 
     def questions(self) -> list[dict]:
-        if not self.settings.metaculus_token:
-            raise RuntimeError("METACULUS_TOKEN is required for Metaculus API requests")
         url = (
             f"{BASE_URL}/posts/"
             f"?tournaments={self.settings.tournament_id}"
