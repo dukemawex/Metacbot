@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from typing import Any
 from urllib import request
@@ -8,6 +9,7 @@ from urllib import request
 from src.config.settings import Settings
 
 BASE_URL = "https://www.metaculus.com/api2"
+logger = logging.getLogger(__name__)
 
 
 class MetaculusClient:
@@ -40,16 +42,29 @@ class MetaculusClient:
     def tournament_meta(self) -> dict:
         if not self.settings.metaculus_token:
             return self._load_fixture("metaculus_tournament_32916.json")
-        return self._request_json(f"{BASE_URL}/tournaments/{self.settings.tournament_id}/")
+        try:
+            return self._request_json(f"{BASE_URL}/tournaments/{self.settings.tournament_id}/")
+        except Exception:
+            if self.settings.dry_run:
+                logger.warning("API request failed; falling back to fixture data (dry-run mode)")
+                return self._load_fixture("metaculus_tournament_32916.json")
+            raise
 
     def questions(self) -> list[dict]:
         if not self.settings.metaculus_token:
             data = self._load_fixture("metaculus_questions.json")
             return data.get("results", data)
-        data = self._request_json(
-            f"{BASE_URL}/questions/?tournaments={self.settings.tournament_id}&limit=100"
-        )
-        return data.get("results", [])
+        try:
+            data = self._request_json(
+                f"{BASE_URL}/questions/?tournaments={self.settings.tournament_id}&limit=100"
+            )
+            return data.get("results", [])
+        except Exception:
+            if self.settings.dry_run:
+                logger.warning("API request failed; falling back to fixture data (dry-run mode)")
+                data = self._load_fixture("metaculus_questions.json")
+                return data.get("results", data)
+            raise
 
     def submit(self, question_id: int, forecast_payload: dict, reasoning: str) -> dict:
         body = {"prediction": forecast_payload, "comment": reasoning}
