@@ -50,7 +50,10 @@ class MetaculusClient:
     def _headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
         if self.settings.metaculus_token:
-            headers["Authorization"] = f"Token {self.settings.metaculus_token}"
+            token = self.settings.metaculus_token.strip()
+            if not token.startswith("Token "):
+                token = f"Token {token}"
+            headers["Authorization"] = token
         return headers
 
     def _request_json(self, url: str, method: str = "GET", body: dict[str, Any] | None = None) -> dict:
