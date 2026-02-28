@@ -26,13 +26,21 @@ class Settings:
     cooldown_minutes: int
     min_prob: float
     max_prob: float
-    tournament_id: int
+    tournament_id: int | str
     data_dir: Path
     fixtures_dir: Path
 
     @property
     def dry_run(self) -> bool:
         return not self.live_mode
+
+    @staticmethod
+    def _parse_tournament_id(value: str) -> int | str:
+        """Parse tournament ID - try as int first, fall back to string."""
+        try:
+            return int(value)
+        except ValueError:
+            return value
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -49,7 +57,7 @@ class Settings:
             cooldown_minutes=int(os.getenv("COOLDOWN_MINUTES", constants.DEFAULT_COOLDOWN_MINUTES)),
             min_prob=float(os.getenv("MIN_PROB", constants.DEFAULT_MIN_PROB)),
             max_prob=float(os.getenv("MAX_PROB", constants.DEFAULT_MAX_PROB)),
-            tournament_id=int(os.getenv("TOURNAMENT_ID", constants.TOURNAMENT_ID)),
+            tournament_id=cls._parse_tournament_id(os.getenv("TOURNAMENT_ID", str(constants.TOURNAMENT_ID))),
             data_dir=base / "data",
             fixtures_dir=base / "tests" / "fixtures",
         )
