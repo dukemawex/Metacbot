@@ -1,14 +1,21 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 
 from src.config.constants import MODEL_VERSION
 from src.execution.dedupe import should_submit, submission_hash
 
+logger = logging.getLogger(__name__)
+
 
 def maybe_submit(client, settings, state: dict, question: dict, final_forecast: dict, reasoning: str, can_submit: bool):
-    qid = str(question["id"])
-    digest = submission_hash(question["id"], final_forecast, reasoning, MODEL_VERSION)
+    question_id = question.get("id")
+    if question_id is None:
+        raise ValueError("Question must have an 'id' field")
+
+    qid = str(question_id)
+    digest = submission_hash(question_id, final_forecast, reasoning, MODEL_VERSION)
     last = state.get("submissions", {}).get(qid)
 
     if not can_submit:
@@ -18,7 +25,18 @@ def maybe_submit(client, settings, state: dict, question: dict, final_forecast: 
     if not should_submit(last, digest, settings.cooldown_minutes):
         return {"submitted": False, "status": "SKIPPED_UNCHANGED", "hash": digest}
 
-    response = client.submit(question["id"], final_forecast, reasoning)
+    response = client.submit(question, final_forecast, reasoning)
+
+    # Post comment using post_id if available, otherwise use question_id with warning
+    post_id = question.get("post_id")
+    if post_id is None:
+        logger.warning(
+            "No post_id for question %s; using question_id for comment (may fail if IDs differ)",
+            question_id,
+        )
+        post_id = question_id
+    client.post_comment(post_id, reasoning)
+
     state.setdefault("submissions", {})[qid] = {
         "hash": digest,
         "timestamp": datetime.now(timezone.utc).isoformat(),
