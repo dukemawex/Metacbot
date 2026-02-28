@@ -30,7 +30,12 @@ def _format_payload_for_api(question: dict, forecast: dict) -> dict:
         return {"percentiles": [p10, p50, p90]}
 
     if qtype == "date":
-        return forecast.get("date_quantiles", {"p10": 0.1, "p50": 0.5, "p90": 0.9})
+        date_quantiles = forecast.get("date_quantiles", {})
+        return {
+            "p10": date_quantiles.get("p10", 0.1),
+            "p50": date_quantiles.get("p50", 0.5),
+            "p90": date_quantiles.get("p90", 0.9),
+        }
 
     return forecast
 

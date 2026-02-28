@@ -19,7 +19,9 @@ def maybe_submit(client, settings, state: dict, question: dict, final_forecast: 
         return {"submitted": False, "status": "SKIPPED_UNCHANGED", "hash": digest}
 
     response = client.submit(question, final_forecast, reasoning)
-    post_id = question.get("post_id") or question["id"]
+    post_id = question.get("post_id")
+    if post_id is None:
+        post_id = question["id"]
     client.post_comment(post_id, reasoning)
     state.setdefault("submissions", {})[qid] = {
         "hash": digest,

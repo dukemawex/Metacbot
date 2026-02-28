@@ -47,7 +47,7 @@ def test_exa_search_raises_in_live_mode():
     with patch("src.research.exa_client.request.urlopen", side_effect=HTTPError(
         "http://example.com", 403, "Forbidden", {}, None
     )):
-        with pytest.raises(HTTPError):
+        with pytest.raises(RuntimeError, match="Exa API request failed"):
             client.search("test query")
 
 
@@ -71,5 +71,28 @@ def test_openrouter_chat_json_raises_in_live_mode():
     with patch("src.llm.openrouter_client.request.urlopen", side_effect=HTTPError(
         "http://example.com", 403, "Forbidden", {}, None
     )):
-        with pytest.raises(HTTPError):
+        with pytest.raises(RuntimeError, match="OpenRouter API request failed"):
             client.chat_json("test prompt")
+
+
+def test_openrouter_chat_falls_back_on_http_error_in_dry_run():
+    settings = _settings(live=False)
+    client = OpenRouterClient(settings)
+
+    with patch("src.llm.openrouter_client.request.urlopen", side_effect=HTTPError(
+        "http://example.com", 403, "Forbidden", {}, None
+    )):
+        result = client.chat("test prompt")
+
+    assert isinstance(result, str)
+
+
+def test_openrouter_chat_raises_in_live_mode():
+    settings = _settings(live=True)
+    client = OpenRouterClient(settings)
+
+    with patch("src.llm.openrouter_client.request.urlopen", side_effect=HTTPError(
+        "http://example.com", 403, "Forbidden", {}, None
+    )):
+        with pytest.raises(RuntimeError, match="OpenRouter API request failed"):
+            client.chat("test prompt")

@@ -43,3 +43,10 @@ def test_date_format():
     forecast = {"date_quantiles": {"p10": 0.15, "p50": 0.55, "p90": 0.85}}
     result = _format_payload_for_api(question, forecast)
     assert result == {"p10": 0.15, "p50": 0.55, "p90": 0.85}
+
+
+def test_date_format_defaults():
+    question = {"id": 5, "type": "date"}
+    forecast = {"date_quantiles": {}}
+    result = _format_payload_for_api(question, forecast)
+    assert result == {"p10": 0.1, "p50": 0.5, "p90": 0.9}
