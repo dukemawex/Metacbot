@@ -39,7 +39,7 @@ class Settings:
         """Parse tournament ID - try as int first, fall back to string."""
         try:
             return int(value)
-        except ValueError:
+        except (ValueError, TypeError):
             return value
 
     @classmethod
