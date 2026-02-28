@@ -33,8 +33,9 @@ class Settings:
     @classmethod
     def from_env(cls) -> "Settings":
         base = Path(__file__).resolve().parents[2]
+        metaculus_token = os.getenv("METACULUS_TOKEN") or os.getenv("METACULUS_API_KEY")
         return cls(
-            metaculus_token=os.getenv("METACULUS_TOKEN"),
+            metaculus_token=metaculus_token,
             exa_api_key=os.getenv("EXA_API_KEY"),
             openrouter_api_key=os.getenv("OPENROUTER_API_KEY"),
             max_questions=int(os.getenv("MAX_QUESTIONS", constants.DEFAULT_MAX_QUESTIONS)),
@@ -50,8 +51,6 @@ class Settings:
 
     def preflight(self) -> tuple[bool, list[str]]:
         errors: list[str] = []
-        if not self.metaculus_token:
-            errors.append("METACULUS_TOKEN is required")
         if not self.exa_api_key:
             errors.append("EXA_API_KEY is required")
         if not self.openrouter_api_key:

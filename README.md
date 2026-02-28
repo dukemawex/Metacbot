@@ -6,7 +6,8 @@ A modular, automated sentinel for Metaculus tournament **32916** ("Current AI To
 
 The bot reads configuration **only** from environment variables (GitHub Secrets in Actions):
 
-- `METACULUS_TOKEN`
+- `METACULUS_TOKEN` (preferred)
+- `METACULUS_API_KEY` (fallback alias)
 - `EXA_API_KEY`
 - `OPENROUTER_API_KEY`
 
