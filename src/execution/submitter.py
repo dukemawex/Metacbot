@@ -18,7 +18,9 @@ def maybe_submit(client, settings, state: dict, question: dict, final_forecast: 
     if not should_submit(last, digest, settings.cooldown_minutes):
         return {"submitted": False, "status": "SKIPPED_UNCHANGED", "hash": digest}
 
-    response = client.submit(question["id"], final_forecast, reasoning)
+    response = client.submit(question, final_forecast, reasoning)
+    post_id = question.get("post_id") or question["id"]
+    client.post_comment(post_id, reasoning)
     state.setdefault("submissions", {})[qid] = {
         "hash": digest,
         "timestamp": datetime.now(timezone.utc).isoformat(),
