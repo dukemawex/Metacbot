@@ -36,7 +36,7 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
-        base = Path.cwd()
+        base = Path(__file__).resolve().parents[2]
         return cls(
             metaculus_token=os.getenv("METACULUS_TOKEN"),
             exa_api_key=os.getenv("EXA_API_KEY"),
