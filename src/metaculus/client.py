@@ -12,6 +12,12 @@ BASE_URL = "https://www.metaculus.com/api"
 logger = logging.getLogger(__name__)
 
 
+# Default percentile values for forecasts
+DEFAULT_P10 = 0.1
+DEFAULT_P50 = 0.5
+DEFAULT_P90 = 0.9
+
+
 def _format_payload_for_api(question: dict, forecast: dict) -> dict:
     """Convert internal forecast format to Metaculus API format."""
     qtype = question.get("type", "binary")
@@ -24,17 +30,17 @@ def _format_payload_for_api(question: dict, forecast: dict) -> dict:
         return {"probability_yes_per_category": dist}
 
     if qtype in {"numeric", "discrete"}:
-        p10 = forecast.get("p10", 0.1)
-        p50 = forecast.get("p50", 0.5)
-        p90 = forecast.get("p90", 0.9)
+        p10 = forecast.get("p10", DEFAULT_P10)
+        p50 = forecast.get("p50", DEFAULT_P50)
+        p90 = forecast.get("p90", DEFAULT_P90)
         return {"percentiles": [p10, p50, p90]}
 
     if qtype == "date":
         date_quantiles = forecast.get("date_quantiles", {})
         return {
-            "p10": date_quantiles.get("p10", 0.1),
-            "p50": date_quantiles.get("p50", 0.5),
-            "p90": date_quantiles.get("p90", 0.9),
+            "p10": date_quantiles.get("p10", DEFAULT_P10),
+            "p50": date_quantiles.get("p50", DEFAULT_P50),
+            "p90": date_quantiles.get("p90", DEFAULT_P90),
         }
 
     return forecast
