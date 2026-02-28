@@ -4,11 +4,13 @@ A modular, automated sentinel for Metaculus tournament **32916** ("Current AI To
 
 ## Secrets and safety
 
-The bot reads secrets **only** from environment variables (GitHub Secrets in Actions):
+The bot reads configuration **only** from environment variables (GitHub Secrets in Actions):
 
 - `METACULUS_TOKEN`
 - `EXA_API_KEY`
 - `OPENROUTER_API_KEY`
+- `LIVE_MODE` (set to `true`)
+- `STRICT_OPEN_WINDOW` (optional, set to `true` to enforce open windows)
 
 Secrets are never hardcoded. `LIVE_MODE=true` is required; dry-run mode is disabled.
 

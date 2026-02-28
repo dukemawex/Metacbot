@@ -15,8 +15,8 @@ jobs:
       METACULUS_TOKEN: ${{ secrets.METACULUS_TOKEN }}
       EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      LIVE_MODE: ${{ vars.LIVE_MODE || 'false' }}
-      STRICT_OPEN_WINDOW: ${{ vars.STRICT_OPEN_WINDOW || 'false' }}
+      LIVE_MODE: ${{ secrets.LIVE_MODE }}
+      STRICT_OPEN_WINDOW: ${{ secrets.STRICT_OPEN_WINDOW }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       - uses: actions/checkout@v4
