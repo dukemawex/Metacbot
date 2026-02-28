@@ -19,7 +19,12 @@ def retrieve_evidence(question: dict, exa_client) -> EvidenceBundle:
         try:
             rows.extend(exa_client.search(query))
         except Exception as exc:
-            logger.warning("Evidence search failed question_id=%s query=%s: %s", question.get("id"), query, exc)
+            logger.warning(
+                "Failed to search evidence for question_id=%s with query=\"%s\": %s",
+                question.get("id"),
+                query,
+                exc,
+            )
     ranked = deduplicate_and_rank(rows)
     question_id = question.get("id")
     try:

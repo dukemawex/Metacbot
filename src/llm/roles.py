@@ -19,7 +19,12 @@ def run_roles(question: dict, evidence, llm_client) -> dict:
         try:
             return parse_strict_json(llm_client.chat_json(_prompt(name) + "\n" + base))
         except Exception as exc:
-            logger.warning("LLM role %s failed question_id=%s: %s", name, question.get("id"), exc)
+            logger.warning(
+                "Failed to execute LLM role \"%s\" for question_id=%s: %s",
+                name,
+                question.get("id"),
+                exc,
+            )
             return {}
 
     researcher = _safe_role("researcher")
